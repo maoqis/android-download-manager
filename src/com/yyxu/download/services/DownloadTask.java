@@ -1,11 +1,14 @@
 
 package com.yyxu.download.services;
 
-import com.yyxu.download.error.FileAlreadyExistException;
-import com.yyxu.download.error.NoMemoryException;
-import com.yyxu.download.http.AndroidHttpClient;
-import com.yyxu.download.utils.NetworkUtils;
-import com.yyxu.download.utils.StorageUtils;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -16,14 +19,13 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.yyxu.download.error.DownloadThrowable;
+import com.yyxu.download.error.ErrorInfo;
+import com.yyxu.download.error.FileAlreadyExistException;
+import com.yyxu.download.error.NoMemoryException;
+import com.yyxu.download.http.AndroidHttpClient;
+import com.yyxu.download.utils.NetworkUtils;
+import com.yyxu.download.utils.StorageUtils;
 
 public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
@@ -33,6 +35,13 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
     private static final String TAG = "DownloadTask";
     private static final boolean DEBUG = true;
     private static final String TEMP_SUFFIX = ".download";
+	public static final String ERROR_BLOCK_INTERNET = "1000";
+	public static final String ERROR_UNKOWN_HOST = "1001";
+	public static final String ERROR_UNKONW = "1002";
+	public static final String ERROR_FILE_EXIST = "1003";
+	public static final String ERROR_SD_NO_MEMORY = "1004";
+	public static final String ERROR_TIME_OUT = "1005";
+	private static final String ERROR_IOE = "1006";
 
     private URL URL;
     private File file;
@@ -49,7 +58,7 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
     private long networkSpeed;
     private long previousTime;
     private long totalTime;
-    private Throwable error = null;
+    private DownloadThrowable error = null;
     private boolean interrupt = false;
 
     private final class ProgressReportingRandomAccessFile extends RandomAccessFile {
@@ -122,6 +131,10 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
         return this.totalTime;
     }
+    
+    public File getFile(){
+		return file;
+    }
 
     public DownloadTaskListener getListener() {
 
@@ -143,13 +156,17 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
         try {
             result = download();
         } catch (NetworkErrorException e) {
-            error = e;
-        } catch (FileAlreadyExistException e) {
-            error = e;
+            error = new DownloadThrowable(new ErrorInfo(ERROR_BLOCK_INTERNET, "NetworkErrorException", e.getMessage()));
+        }catch (ConnectTimeoutException e) {
+			// TODO: handle exception
+        	error = new DownloadThrowable(new ErrorInfo(ERROR_TIME_OUT, "ConnectTimeoutException", e.getMessage()));;
+		} 
+        catch (FileAlreadyExistException e) {
+            error = new DownloadThrowable(new ErrorInfo(ERROR_FILE_EXIST, "FileAlreadyExistException", e.getMessage()));;
         } catch (NoMemoryException e) {
-            error = e;
+            error = new DownloadThrowable(new ErrorInfo(ERROR_SD_NO_MEMORY, "NoMemoryException", e.getMessage()));;
         } catch (IOException e) {
-            error = e;
+            error = new DownloadThrowable(new ErrorInfo(ERROR_IOE, "IOException", e.getMessage()));;
         } finally {
             if (client != null) {
                 client.close();
@@ -209,7 +226,7 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
     private HttpGet httpGet;
     private HttpResponse response;
 
-    private long download() throws NetworkErrorException, IOException, FileAlreadyExistException,
+    private long download() throws NetworkErrorException,ConnectTimeoutException, IOException, FileAlreadyExistException,
             NoMemoryException {
 
         if (DEBUG) {
@@ -285,7 +302,7 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
     }
 
-    public int copy(InputStream input, RandomAccessFile out) throws IOException,
+    public int copy(InputStream input, RandomAccessFile out) throws ConnectTimeoutException,
             NetworkErrorException {
 
         if (input == null || out == null) {
@@ -296,7 +313,12 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
         BufferedInputStream in = new BufferedInputStream(input, BUFFER_SIZE);
         if (DEBUG) {
-            Log.v(TAG, "length" + out.length());
+            try {
+				Log.v(TAG, "length" + out.length());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         int count = 0, n = 0;
@@ -304,14 +326,29 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
         try {
 
-            out.seek(out.length());
+            try {
+				out.seek(out.length());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
             while (!interrupt) {
-                n = in.read(buffer, 0, BUFFER_SIZE);
+                try {
+					n = in.read(buffer, 0, BUFFER_SIZE);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
                 if (n == -1) {
                     break;
                 }
-                out.write(buffer, 0, n);
+                try {
+					out.write(buffer, 0, n);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
                 count += n;
 
                 /*
@@ -338,12 +375,51 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
         } finally {
             client.close(); // must close client first
             client = null;
-            out.close();
-            in.close();
-            input.close();
+            try {
+				out.close();
+				in.close();
+				input.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         return count;
 
     }
+
+//	public static int getErrorCode(Throwable error2) {
+//		// TODO Auto-generated method stub
+//		String count=ERROR_UNKONW ;
+//		if (error2 instanceof FileAlreadyExistException) {
+//			count = ERROR_FILE_EXIST;
+//		}else if (error2 instanceof NoMemoryException) {
+//			count = ERROR_SD_NO_MEMORY;
+//			
+//		}else if (error2 instanceof NetworkErrorException) {
+//			count = ERROR_BLOCK_INTERNET;
+//
+//		}if (error2 instanceof ConnectTimeoutException) {
+//			count = ERROR_TIME_OUT;
+//		}else if (error2 instanceof IOException) {
+//			count = ERROR_IOE;
+//			
+//		}else {
+//			count = ERROR_UNKONW;
+//		}
+//		Log.d(" count ", msg)
+//		
+//		return count;
+//	}
+
+//	public static String getErrorInfo(Throwable error2) {
+//		// TODO Auto-generated method stub
+//		if (error2==null) {
+//			return null;
+//		}
+//		return error2.getMessage();
+//	}
+
+
 
 }
