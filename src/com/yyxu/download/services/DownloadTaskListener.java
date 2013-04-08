@@ -1,8 +1,6 @@
 
 package com.yyxu.download.services;
 
-import com.yyxu.download.error.DownloadThrowable;
-
 public interface DownloadTaskListener {
 
     public void updateProcess(DownloadTask task);
@@ -11,5 +9,5 @@ public interface DownloadTaskListener {
 
     public void preDownload(DownloadTask task);
 
-    public void errorDownload(DownloadTask task, DownloadThrowable error);
+    public void errorDownload(DownloadTask task, Throwable error);
 }
