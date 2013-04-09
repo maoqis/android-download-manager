@@ -3,6 +3,7 @@ package com.yyxu.download.widgets;
 import java.util.HashMap;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -18,6 +19,7 @@ public class ViewHolder {
 	public static final int KEY_SPEED = 1;
 	public static final int KEY_PROGRESS = 2;
 	public static final int KEY_IS_PAUSED = 3;
+	private static final String TAG = "ViewHolder";
 
 	public TextView titleText;
 	public ProgressBar progressBar;
@@ -65,7 +67,17 @@ public class ViewHolder {
 			}
 			if (Boolean.parseBoolean(item.get(KEY_IS_PAUSED))) {
 				onPause();
+			}else {
+				onResume();
 			}
+			Log.d(TAG, "URL = "+NetworkUtils.getFileNameFromUrl(item.get(KEY_URL))+" is pause"+item.get(KEY_IS_PAUSED));
+		}
+	}
+
+	public void onResume() {
+		if (hasInited) {
+			continueButton.setVisibility(View.GONE);
+			pauseButton.setVisibility(View.VISIBLE);
 		}
 	}
 

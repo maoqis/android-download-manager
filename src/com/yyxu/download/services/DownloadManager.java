@@ -9,6 +9,7 @@ import com.yyxu.download.utils.StorageUtils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
@@ -22,6 +23,7 @@ public class DownloadManager extends Thread {
 
 	private static final int MAX_TASK_COUNT = 100;
 	private static final int MAX_DOWNLOAD_THREAD_COUNT = 3;
+	private static final String TAG = "DownloadManager";
 
 	private Context mContext;
 
@@ -133,7 +135,8 @@ public class DownloadManager extends Thread {
 		}
 		for (int i = 0; i < mPausingTasks.size(); i++) {
 			task = mPausingTasks.get(i);
-			broadcastAddTask(task.getUrl());
+			broadcastAddTask(task.getUrl(),true);
+			Log.d(TAG, "reBroadcastAddAllTask mPausingTasks "+task.getUrl());
 		}
 	}
 
@@ -228,9 +231,10 @@ public class DownloadManager extends Thread {
 			task = mDownloadingTasks.get(i);
 			if (task != null && task.getUrl().equals(url)) {
 				File file = new File(StorageUtils.FILE_ROOT
-						+ NetworkUtils.getFileNameFromUrl(task.getUrl()));
-				if (file.exists())
+						+ NetworkUtils.getFileNameFromUrl(task.getUrl())+StorageUtils.TEMP_SUFFIX);
+				if (file.exists()){
 					file.delete();
+				}
 
 				task.onCancelled();
 				if (mDownloadingTasks.contains(task)) {

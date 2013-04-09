@@ -21,7 +21,7 @@ public class StorageUtils {
     private static final String SDCARD_ROOT = Environment.getExternalStorageDirectory()
             .getAbsolutePath() + "/";
     public static final String FILE_ROOT = SDCARD_ROOT + "testDM/";
-
+    public  static final String TEMP_SUFFIX = ".download";
     private static final long LOW_STORAGE_THRESHOLD = 1024 * 1024 * 10;
 
     public static boolean isSdCardWrittenable() {

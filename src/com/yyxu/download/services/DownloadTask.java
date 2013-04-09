@@ -34,7 +34,7 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
 
     private static final String TAG = "DownloadTask";
     private static final boolean DEBUG = true;
-    private static final String TEMP_SUFFIX = ".download";
+    private static final String TEMP_SUFFIX = StorageUtils.TEMP_SUFFIX;
 	public static final String ERROR_BLOCK_INTERNET = "1000";
 	public static final String ERROR_UNKOWN_HOST = "1001";
 	public static final String ERROR_UNKONW = "1002";
