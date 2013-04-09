@@ -9,6 +9,7 @@ import com.yyxu.download.utils.StorageUtils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -119,6 +120,13 @@ public class DownloadManager extends Thread {
 		nofityIntent.putExtra(MyIntents.TYPE, MyIntents.Types.ADD);
 		nofityIntent.putExtra(MyIntents.URL, url);
 		nofityIntent.putExtra(MyIntents.IS_PAUSED, isInterrupt);
+		
+		File file = new File(StorageUtils.FILE_ROOT
+				+ NetworkUtils.getFileNameFromUrl(url)+StorageUtils.TEMP_SUFFIX);
+		if (file.exists()){
+			file.delete();
+		}
+		
 		mContext.sendBroadcast(nofityIntent);
 	}
 
@@ -209,15 +217,15 @@ public class DownloadManager extends Thread {
 	public synchronized void pauseAllTask() {
 
 		DownloadTask task;
-
-		for (int i = 0; i < mTaskQueue.size(); i++) {
-			task = mTaskQueue.get(i);
+		int munq = mTaskQueue.size();
+		for (int i = 0; i < munq; i++) {
+			task = mTaskQueue.get(0);
 			mTaskQueue.remove(task);
 			mPausingTasks.add(task);
 		}
-
-		for (int i = 0; i < mDownloadingTasks.size(); i++) {
-			task = mDownloadingTasks.get(i);
+		munq =  mDownloadingTasks.size();
+		for (int i = 0; i < munq; i++) {
+			task = mDownloadingTasks.get(0);
 			if (task != null) {
 				pauseTask(task);
 			}
@@ -405,6 +413,10 @@ public class DownloadManager extends Thread {
 							Toast.makeText(mContext,
 									"error取消loading errorcode = " + errorCode,
 									Toast.LENGTH_SHORT).show();
+//							File tempFile = task.getTempFile();
+//							if (tempFile!=null?tempFile.exists():false) {
+//								tempFile.delete();
+//							}
 						}
 					}
 
@@ -441,11 +453,12 @@ public class DownloadManager extends Thread {
 			DownloadTask task = null;
 			while (mDownloadingTasks.size() >= MAX_DOWNLOAD_THREAD_COUNT
 					|| (task = taskQueue.poll()) == null) {
-				try {
-					Thread.sleep(1000); // sleep
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+//				try {
+//					Thread.sleep(1000); // sleep
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+				SystemClock.sleep(1000);
 			}
 			return task;
 		}

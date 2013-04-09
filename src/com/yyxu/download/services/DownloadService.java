@@ -31,9 +31,9 @@ public class DownloadService extends Service {
 
         super.onStart(intent, startId);
 
-        // if (mDownloadManager == null) {
-        // mDownloadManager = new DownloadManager(this);
-        // }
+         if (mDownloadManager == null) {
+         mDownloadManager = new DownloadManager(this);
+         }
 
         if (intent.getAction().equals("com.yyxu.download.services.IDownloadService")) {
             int type = intent.getIntExtra(MyIntents.TYPE, -1);
@@ -73,21 +73,19 @@ public class DownloadService extends Service {
                     break;
                 case MyIntents.Types.STOP:
                     mDownloadManager.close();
-                    // mDownloadManager = null;
+                     mDownloadManager = null;
                     break;
 
                 default:
                     break;
             }
         }
-
     }
 
     private class DownloadServiceImpl extends IDownloadService.Stub {
 
         @Override
         public void startManage() throws RemoteException {
-
             mDownloadManager.startManage();
         }
 
@@ -99,17 +97,17 @@ public class DownloadService extends Service {
 
         @Override
         public void pauseTask(String url) throws RemoteException {
-
+        	mDownloadManager.pauseAllTask();
         }
 
         @Override
         public void deleteTask(String url) throws RemoteException {
-
+        	mDownloadManager.deleteTask(url);
         }
 
         @Override
         public void continueTask(String url) throws RemoteException {
-
+        	mDownloadManager.continueTask(url);
         }
 
     }

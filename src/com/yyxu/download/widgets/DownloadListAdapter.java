@@ -43,9 +43,13 @@ public class DownloadListAdapter extends BaseAdapter {
 	}
 
 	public void addItem(String url, boolean isPaused) {
+		addItem(url, isPaused, null);
+	}
+	public void addItem(String url , boolean isPaused ,String progress){
 		HashMap<Integer, String> item = ViewHolder.getItemDataMap(url, null,
-				null, isPaused + "");
+				progress, isPaused + "");
 		dataList.add(item);
+		
 		this.notifyDataSetChanged();
 	}
 
@@ -62,10 +66,10 @@ public class DownloadListAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		if (convertView == null) {
+//		if (convertView == null) {
 			convertView = LayoutInflater.from(mContext).inflate(
 					R.layout.download_list_item, null);
-		}
+//		}
 
 		HashMap<Integer, String> itemData = dataList.get(position);
 		String url = itemData.get(ViewHolder.KEY_URL);

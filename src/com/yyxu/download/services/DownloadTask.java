@@ -135,7 +135,9 @@ public class DownloadTask extends AsyncTask<Void, Integer, Long> {
     public File getFile(){
 		return file;
     }
-
+    public File getTempFile(){
+    	return tempFile;
+    }
     public DownloadTaskListener getListener() {
 
         return this.listener;
